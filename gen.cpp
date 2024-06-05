@@ -56,7 +56,7 @@ vector<int> fitness(const vector<vector<int>> &population) {
         if (S2 <= knapsack_capacity) {
             fitness[i] = S1;
         } else {
-            fitness[i] = 0;
+            fitness[i] = std::numeric_limits<int>::min();
         }
     }
     return fitness;
@@ -91,6 +91,17 @@ vector<vector<int>> crossover(const vector<vector<int>> &parents, int num_offspr
         }
         copy(parents[parent1_index].begin(), parents[parent1_index].begin() + crossover_point, offsprings[cnt_offsprings].begin());
         copy(parents[parent2_index].begin() + crossover_point, parents[parent2_index].end(), offsprings[cnt_offsprings].begin() + crossover_point);
+
+        // Ensure the offspring fits the capacity constraint
+        int offspring_weight = inner_product(offsprings[cnt_offsprings].begin(), offsprings[cnt_offsprings].end(), weight.begin(), 0);
+        while (offspring_weight > knapsack_capacity) {
+            int item_to_remove = random_int(0, num_items - 1);
+            if (offsprings[cnt_offsprings][item_to_remove] == 1) {
+                offsprings[cnt_offsprings][item_to_remove] = 0;
+                offspring_weight -= weight[item_to_remove];
+            }
+        }
+
         cnt_offsprings++;
         i++;
     }
@@ -106,7 +117,21 @@ vector<vector<int>> mutation(vector<vector<int>> offsprings) {
             continue;
         }
         int int_random_value = random_int(0, offsprings[0].size() - 1);
-        offspring[int_random_value] = (offspring[int_random_value] == 0) ? 1 : 0;
+        if (offspring[int_random_value] == 0) {
+            offspring[int_random_value] = 1;
+        } else {
+            offspring[int_random_value] = 0;
+        }
+
+        // Ensure the mutated offspring fits the capacity constraint
+        int offspring_weight = inner_product(offspring.begin(), offspring.end(), weight.begin(), 0);
+        while (offspring_weight > knapsack_capacity) {
+            int item_to_remove = random_int(0, num_items - 1);
+            if (offspring[item_to_remove] == 1) {
+                offspring[item_to_remove] = 0;
+                offspring_weight -= weight[item_to_remove];
+            }
+        }
     }
     return offsprings;
 }
